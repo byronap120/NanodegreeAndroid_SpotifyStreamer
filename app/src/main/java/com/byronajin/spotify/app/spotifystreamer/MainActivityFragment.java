@@ -2,12 +2,14 @@ package com.byronajin.spotify.app.spotifystreamer;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -48,6 +50,7 @@ public class MainActivityFragment extends Fragment {
     TextView textViewArtistNoFound;
     ArrayList<MyArtist> artistList;
     String actualQuery;
+    boolean networkErrorConection;
 
     public MainActivityFragment() {
     }
@@ -58,6 +61,7 @@ public class MainActivityFragment extends Fragment {
         setHasOptionsMenu(true);
         api = new SpotifyApi();
         actualQuery="";
+        networkErrorConection = false;
 
         if(savedInstanceState == null || !savedInstanceState.containsKey("artistList")) {
             artistList = new ArrayList<MyArtist>();
@@ -137,6 +141,7 @@ public class MainActivityFragment extends Fragment {
                 }
             }catch (RetrofitError error){
                 Log.e("RetrofitError", error.toString());
+                networkErrorConection = true;
                 return null;
             }
 
@@ -161,8 +166,23 @@ public class MainActivityFragment extends Fragment {
                         artistAdapter.add(artist);
                     }
                 }
+            }else if(networkErrorConection == true){
+                showDialogError();
             }
         }
+    }
+
+    public void showDialogError(){
+        AlertDialog alertDialog = new AlertDialog.Builder(getActivity()).create();
+        alertDialog.setTitle("Network Error");
+        alertDialog.setMessage("Please check your network connection and try again ");
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
     }
 
     @Override
