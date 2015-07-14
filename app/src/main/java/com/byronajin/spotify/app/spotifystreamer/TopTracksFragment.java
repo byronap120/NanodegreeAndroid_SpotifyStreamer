@@ -2,11 +2,10 @@ package com.byronajin.spotify.app.spotifystreamer;
 
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +27,7 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.RetrofitError;
 
 
 /**
@@ -75,6 +75,19 @@ public class TopTracksFragment extends Fragment {
        // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
        // ((FragmentActivity) getActivity()).setSupportActionBar(toolbar);
 
+       // TopTracksFragment.setSupportActionBar(toolbar);
+
+      //  getActivity().setSupportActionBar(toolbar);
+
+
+        ((TopTracks)getActivity()).setSupportActionBar(toolbar);
+        ((TopTracks)getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        CollapsingToolbarLayout collapsingToolbar =
+                (CollapsingToolbarLayout) view.findViewById(R.id.collapsing_toolbar);
+
+        collapsingToolbar.setTitle("Test");
+
         list = (ListView) view.findViewById(R.id.listViewTopTracks);
         artistImageView = (ImageView) view.findViewById(R.id.ArtistImageView);
         tracksAdapter = new TopTrackAdapter<MyTrack>(
@@ -111,25 +124,35 @@ public class TopTracksFragment extends Fragment {
                 return null;
             }
 
-            //Get the information from API
-            SpotifyService service = api.getService();
-            Map<String, Object> options = new HashMap<>();
-            options.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
-            Tracks result1 = service.getArtistTopTrack(params[0], options);
-            List<Track> tracksArtist= result1.tracks;
             //Create a new List of "MyTrack" that implement parcelable
             ArrayList<MyTrack> myArtistTracks = new ArrayList<MyTrack>();
-            for (int i = 0; i < tracksArtist.size(); i++) {
-                myArtistTracks.add(new MyTrack(tracksArtist.get(i)));
+
+            try{
+                //Get the information from API
+                SpotifyService service = api.getService();
+                Map<String, Object> options = new HashMap<>();
+                options.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
+                Tracks result1 = service.getArtistTopTrack(params[0], options);
+                List<Track> tracksArtist= result1.tracks;
+
+                for (int i = 0; i < tracksArtist.size(); i++) {
+                    myArtistTracks.add(new MyTrack(tracksArtist.get(i)));
+                }
+                
+                //read the artist to get the image
+                ArtistsPager results = service.searchArtists(params[1]);
+                List<Artist> artists = results.artists.items;
+                List<Image> imagesArtist =  artists.get(0).images;
+                if(imagesArtist.size()>0){
+                    urlImageArtist=imagesArtist.get(0).url;
+                }
+
+            }catch (RetrofitError error){
+                return  null;
             }
 
-            //read the artist to get the image
-            ArtistsPager results = service.searchArtists(params[1]);
-            List<Artist> artists = results.artists.items;
-            List<Image> imagesArtist =  artists.get(0).images;
-            if(imagesArtist.size()>0){
-                urlImageArtist=imagesArtist.get(0).url;
-            }
+
+
 
             return myArtistTracks;
         }
@@ -142,6 +165,7 @@ public class TopTracksFragment extends Fragment {
                     tracksAdapter.add(tracks);
                 }
 
+                if(urlImageArtist != null && !urlImageArtist.equals(""))
                 Picasso.with(getActivity())
                         .load(urlImageArtist)
                         .into(artistImageView);

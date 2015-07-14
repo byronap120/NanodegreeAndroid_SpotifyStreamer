@@ -10,9 +10,16 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-<!--
-        <item name="android:windowBackground">@color/colorWindowBackground2</item>
--->
+    </style>
+
+    <style name="Base.SpotifyThemeNoActionbar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+
+    <style name="SpotifyThemeNoActionbar" parent="Base.SpotifyThemeNoActionbar">
     </style>
 
 </resources>

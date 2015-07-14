@@ -20,7 +20,8 @@
         </activity>
         <activity
             android:name=".TopTracks"
-            android:label="@string/title_activity_top_tracks" >
+            android:label="@string/title_activity_top_tracks"
+            android:theme="@style/SpotifyThemeNoActionbar">
         </activity>
     </application>
 

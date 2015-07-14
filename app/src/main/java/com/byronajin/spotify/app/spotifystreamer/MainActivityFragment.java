@@ -31,6 +31,7 @@ import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
+import retrofit.RetrofitError;
 
 
 /**
@@ -123,15 +124,22 @@ public class MainActivityFragment extends Fragment {
                 return null;
             }
 
-            //Get the information from API
-            SpotifyService service = api.getService();
-            ArtistsPager results = service.searchArtists(params[0]);
-            List<Artist> artists = results.artists.items;
             //Create a new List of "MyArtist" that implement parcelable
             ArrayList<MyArtist> myArtist = new ArrayList<MyArtist>();
-            for (int i = 0; i < artists.size(); i++) {
-                myArtist.add(new MyArtist(artists.get(i)));
+
+            try {
+                //Get the information from API
+                SpotifyService service = api.getService();
+                ArtistsPager results = service.searchArtists(params[0]);
+                List<Artist> artists = results.artists.items;
+                for (int i = 0; i < artists.size(); i++) {
+                    myArtist.add(new MyArtist(artists.get(i)));
+                }
+            }catch (RetrofitError error){
+                Log.e("RetrofitError", error.toString());
+                return null;
             }
+
             return myArtist;
         }
 
