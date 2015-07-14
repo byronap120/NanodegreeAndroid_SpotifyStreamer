@@ -1,0 +1,69 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    tools:context=".MainActivityFragment">
+
+
+    <LinearLayout
+        android:id="@+id/resultMessages"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="100dp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageView"
+            android:src="@android:drawable/ic_menu_search"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/find_artist_layout"
+            android:id="@+id/textView"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/textColorTitle"
+            android:textSize="16dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/artistNotFound"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="100dp"
+        android:visibility="invisible">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageView2"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/artist_not_found"
+            android:id="@+id/textViewArtistNoFound"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/textColorTitle"
+            android:textSize="16dp"/>
+    </LinearLayout>
+
+    <ListView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/listViewArtists"
+        android:visibility="invisible"
+
+        />
+</FrameLayout>
