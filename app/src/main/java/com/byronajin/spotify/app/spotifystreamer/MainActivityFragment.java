@@ -96,7 +96,7 @@ public class MainActivityFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String idArtist = artistList.get(position).id;
                 Intent intent = new Intent(getActivity(), TopTracks.class)
-                        .putExtra(Intent.EXTRA_TEXT, idArtist).putExtra("artistName", actualQuery);
+                        .putExtra(Intent.EXTRA_TEXT, idArtist).putExtra("artistName", artistList.get(position).name);
                 startActivity(intent);
             }
         });

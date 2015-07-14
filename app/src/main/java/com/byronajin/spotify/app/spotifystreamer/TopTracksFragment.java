@@ -4,11 +4,16 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ListView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +25,7 @@ import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 
@@ -35,6 +41,8 @@ public class TopTracksFragment extends Fragment {
     ArrayList<MyTrack> trackList;
     ListView list;
     String actualQuery;
+    String urlImageArtist;
+    ImageView artistImageView;
 
     public TopTracksFragment() {
     }
@@ -44,6 +52,9 @@ public class TopTracksFragment extends Fragment {
         super.onCreate(savedInstanceState);
         api = new SpotifyApi();
         actualQuery="";
+        urlImageArtist="";
+
+
 
         if(savedInstanceState == null || !savedInstanceState.containsKey("trackList")) {
             trackList = new ArrayList<MyTrack>();
@@ -59,7 +70,13 @@ public class TopTracksFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_top_tracks, container, false);
 
+        final Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+       // setSupportActionBar(toolbar);
+       // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+       // ((FragmentActivity) getActivity()).setSupportActionBar(toolbar);
+
         list = (ListView) view.findViewById(R.id.listViewTopTracks);
+        artistImageView = (ImageView) view.findViewById(R.id.ArtistImageView);
         tracksAdapter = new TopTrackAdapter<MyTrack>(
                 getActivity(),
                 trackList);
@@ -69,7 +86,8 @@ public class TopTracksFragment extends Fragment {
         Intent intent = getActivity().getIntent();
         if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
             String idArtist = intent.getStringExtra(Intent.EXTRA_TEXT);
-            new SearchSpotifyTask().execute(idArtist);
+            String artistName = intent.getStringExtra("artistName");
+            new SearchSpotifyTask().execute(idArtist,artistName);
         }
         return view;
     }
@@ -104,6 +122,15 @@ public class TopTracksFragment extends Fragment {
             for (int i = 0; i < tracksArtist.size(); i++) {
                 myArtistTracks.add(new MyTrack(tracksArtist.get(i)));
             }
+
+            //read the artist to get the image
+            ArtistsPager results = service.searchArtists(params[1]);
+            List<Artist> artists = results.artists.items;
+            List<Image> imagesArtist =  artists.get(0).images;
+            if(imagesArtist.size()>0){
+                urlImageArtist=imagesArtist.get(0).url;
+            }
+
             return myArtistTracks;
         }
 
@@ -114,6 +141,12 @@ public class TopTracksFragment extends Fragment {
                 for(MyTrack tracks : tracksListFromAPI) {
                     tracksAdapter.add(tracks);
                 }
+
+                Picasso.with(getActivity())
+                        .load(urlImageArtist)
+                        .into(artistImageView);
+
+
             }
         }
     }
