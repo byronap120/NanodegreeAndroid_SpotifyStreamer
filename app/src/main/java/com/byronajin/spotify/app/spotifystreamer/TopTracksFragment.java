@@ -43,6 +43,8 @@ public class TopTracksFragment extends Fragment {
     String actualQuery;
     String urlImageArtist;
     ImageView artistImageView;
+    CollapsingToolbarLayout collapsingToolbar;
+    String artistName;
 
     public TopTracksFragment() {
     }
@@ -53,16 +55,6 @@ public class TopTracksFragment extends Fragment {
         api = new SpotifyApi();
         actualQuery="";
         urlImageArtist="";
-
-
-
-        if(savedInstanceState == null || !savedInstanceState.containsKey("trackList")) {
-            trackList = new ArrayList<MyTrack>();
-        }
-        else {
-            trackList = savedInstanceState.getParcelableArrayList("trackList");
-            actualQuery = savedInstanceState.getString("actualQuery");
-        }
     }
 
     @Override
@@ -70,38 +62,44 @@ public class TopTracksFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_top_tracks, container, false);
 
+        list = (ListView) view.findViewById(R.id.listViewTopTracks);
+        artistImageView = (ImageView) view.findViewById(R.id.ArtistImageView);
         final Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-       // setSupportActionBar(toolbar);
-       // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-       // ((FragmentActivity) getActivity()).setSupportActionBar(toolbar);
-
-       // TopTracksFragment.setSupportActionBar(toolbar);
-
-      //  getActivity().setSupportActionBar(toolbar);
-
-
+        collapsingToolbar = (CollapsingToolbarLayout) view.findViewById(R.id.collapsing_toolbar);
+        //Replace the action bar with the toolbar
         ((TopTracks)getActivity()).setSupportActionBar(toolbar);
         ((TopTracks)getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        CollapsingToolbarLayout collapsingToolbar =
-                (CollapsingToolbarLayout) view.findViewById(R.id.collapsing_toolbar);
 
-        collapsingToolbar.setTitle("Test");
+        //Restore the values of the list of tracks and Artist image url
+        if(savedInstanceState == null || !savedInstanceState.containsKey("trackList")) {
+            trackList = new ArrayList<MyTrack>();
+            Intent intent = getActivity().getIntent();
+            if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
+                String idArtist = intent.getStringExtra(Intent.EXTRA_TEXT);
+                artistName = intent.getStringExtra("artistName");
+                new SearchSpotifyTask().execute(idArtist,artistName);
+            }
+        }
+        else {
+            trackList = savedInstanceState.getParcelableArrayList("trackList");
+            actualQuery = savedInstanceState.getString("actualQuery");
+            artistName =  savedInstanceState.getString("artistName");
+            urlImageArtist =  savedInstanceState.getString("urlImageArtist");
 
-        list = (ListView) view.findViewById(R.id.listViewTopTracks);
-        artistImageView = (ImageView) view.findViewById(R.id.ArtistImageView);
+            if(urlImageArtist != null && !urlImageArtist.equals(""))
+                Picasso.with(getActivity())
+                        .load(urlImageArtist)
+                        .into(artistImageView);
+        }
+
+        collapsingToolbar.setTitle(artistName);
         tracksAdapter = new TopTrackAdapter<MyTrack>(
                 getActivity(),
                 trackList);
         list.setAdapter(tracksAdapter);
 
 
-        Intent intent = getActivity().getIntent();
-        if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
-            String idArtist = intent.getStringExtra(Intent.EXTRA_TEXT);
-            String artistName = intent.getStringExtra("artistName");
-            new SearchSpotifyTask().execute(idArtist,artistName);
-        }
         return view;
     }
 
@@ -111,6 +109,8 @@ public class TopTracksFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelableArrayList("trackList", trackList);
         outState.putString("actualQuery", actualQuery);
+        outState.putString("artistName", artistName);
+        outState.putString("urlImageArtist", urlImageArtist);
         super.onSaveInstanceState(outState);
     }
 
@@ -138,7 +138,7 @@ public class TopTracksFragment extends Fragment {
                 for (int i = 0; i < tracksArtist.size(); i++) {
                     myArtistTracks.add(new MyTrack(tracksArtist.get(i)));
                 }
-                
+
                 //read the artist to get the image
                 ArtistsPager results = service.searchArtists(params[1]);
                 List<Artist> artists = results.artists.items;
@@ -150,9 +150,6 @@ public class TopTracksFragment extends Fragment {
             }catch (RetrofitError error){
                 return  null;
             }
-
-
-
 
             return myArtistTracks;
         }
@@ -169,7 +166,6 @@ public class TopTracksFragment extends Fragment {
                 Picasso.with(getActivity())
                         .load(urlImageArtist)
                         .into(artistImageView);
-
 
             }
         }
