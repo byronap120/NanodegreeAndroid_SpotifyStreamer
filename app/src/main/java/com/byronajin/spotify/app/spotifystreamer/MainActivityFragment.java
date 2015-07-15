@@ -165,6 +165,7 @@ public class MainActivityFragment extends Fragment {
                     for(MyArtist artist : artistListFromAPI) {
                         artistAdapter.add(artist);
                     }
+                    artistAdapter.notifyDataSetChanged();
                 }
             }else if(networkErrorConection == true){
                 showDialogError();
