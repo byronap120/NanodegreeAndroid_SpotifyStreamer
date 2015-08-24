@@ -6,11 +6,13 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 
@@ -47,6 +49,9 @@ public class TopTracksFragment extends Fragment {
     ImageView artistImageView;
     CollapsingToolbarLayout collapsingToolbar;
     String artistName;
+    String idArtist;
+
+
 
     public TopTracksFragment() {
     }
@@ -78,9 +83,9 @@ public class TopTracksFragment extends Fragment {
             trackList = new ArrayList<MyTrack>();
             Intent intent = getActivity().getIntent();
             if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
-                String idArtist = intent.getStringExtra(Intent.EXTRA_TEXT);
+                idArtist = intent.getStringExtra(Intent.EXTRA_TEXT);
                 artistName = intent.getStringExtra("artistName");
-                new SearchSpotifyTask().execute(idArtist,artistName);
+                new SearchSpotifyTask().execute(idArtist, artistName);
             }
         }
         else {
@@ -100,6 +105,17 @@ public class TopTracksFragment extends Fragment {
                 getActivity(),
                 trackList);
         list.setAdapter(tracksAdapter);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String trackName = trackList.get(position).name;
+                Intent intent = new Intent(getActivity(), TrackPlayer.class)
+                        .putExtra("idArtist", idArtist)
+                        .putExtra("tackName", trackName)
+                        .putExtra("artistName", artistName);
+                startActivity(intent);
+            }
+        });
 
 
         return view;

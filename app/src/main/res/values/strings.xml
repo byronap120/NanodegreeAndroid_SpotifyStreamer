@@ -8,6 +8,7 @@
     <string name="find_artist_layout">Find your favourite artist</string>
     <string name="artist_not_found">No artist found for</string>
     <string name="title_activity_top_tracks">TopTracks</string>
+    <string name="title_activity_track_player">TrackPlayer</string>
 
 
 </resources>
