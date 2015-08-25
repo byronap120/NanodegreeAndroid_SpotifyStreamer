@@ -1,12 +1,15 @@
 package com.byronajin.spotify.app.spotifystreamer;
 
+
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
+
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,9 +30,6 @@ import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.ArtistsPager;
-import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 import retrofit.RetrofitError;
@@ -37,7 +37,7 @@ import retrofit.RetrofitError;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class TrackPlayerFragment extends Fragment {
+public class TrackPlayerFragment  extends DialogFragment {
     String urlImageArtist;
     SpotifyApi api;
     String idArtist;
@@ -50,8 +50,21 @@ public class TrackPlayerFragment extends Fragment {
     private Handler mHandler;
     boolean playing;
     ImageView albumImageView;
-    TextView textViewTrack,textViewArtist,textViewAlbum;
+    TextView textViewTrack,textViewArtist,textViewAlbum,textViewTime;
     ImageButton imageButtonPrevious, imageButtonPause , imageButtonNext;
+
+
+    static TrackPlayerFragment newInstance(String idArtist, String trackName, String artistName) {
+
+        TrackPlayerFragment f = new TrackPlayerFragment();
+
+        Bundle args = new Bundle();
+        args.putString("idArtist", idArtist);
+        args.putString("trackName", trackName);
+        args.putString("artistName", artistName);
+        f.setArguments(args);
+        return f;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,6 +91,7 @@ public class TrackPlayerFragment extends Fragment {
         textViewTrack = (TextView) view.findViewById(R.id.textViewTrack);
         textViewArtist = (TextView) view.findViewById(R.id.textViewArtist);
         textViewAlbum = (TextView) view.findViewById(R.id.textViewAlbum);
+        textViewTime = (TextView) view.findViewById(R.id.textViewTime);
         imageButtonPrevious = (ImageButton) view.findViewById(R.id.imageButtonPrevious);
         imageButtonPrevious.setOnClickListener(onClickPlayerButton);
         imageButtonPause = (ImageButton) view.findViewById(R.id.imageButtonPause);
@@ -87,12 +101,17 @@ public class TrackPlayerFragment extends Fragment {
         trackSeekBar.setMax(30);
 
         Intent intent = getActivity().getIntent();
-        if(intent != null){
+       if(getArguments()== null){
             idArtist = intent.getStringExtra("idArtist");
             trackName = intent.getStringExtra("tackName");
             artistName = intent.getStringExtra("artistName");
             new SearchSpotifyTask().execute(idArtist);
-        }
+        }else {
+           idArtist = getArguments().getString("idArtist");
+           trackName = getArguments().getString("trackName");
+           artistName = getArguments().getString("artistName");
+           new SearchSpotifyTask().execute(idArtist);
+       }
 
         //Listeners for player
         trackSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -101,6 +120,7 @@ public class TrackPlayerFragment extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (mediaPlayer != null && fromUser) {
                     mediaPlayer.seekTo(progress * 1000);
+                    setTextSeekBar(progress);
                 }
             }
 
@@ -118,7 +138,6 @@ public class TrackPlayerFragment extends Fragment {
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-               Log.d("TERMINO" , "FINISHHHHHH");
                 playing = false;
             }
         });
@@ -289,8 +308,19 @@ public class TrackPlayerFragment extends Fragment {
         @Override
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
-            trackSeekBar.setProgress(mediaPlayer.getCurrentPosition() / 1000);
+            int time = mediaPlayer.getCurrentPosition() / 1000;
+            trackSeekBar.setProgress(time);
+            setTextSeekBar(time);
+
         }
+    }
+
+    public void setTextSeekBar(int time){
+        String timeString = time + "";
+        if(time<10){
+            timeString = "0" + timeString;
+        }
+        textViewTime.setText("0:" + timeString);
     }
 
 

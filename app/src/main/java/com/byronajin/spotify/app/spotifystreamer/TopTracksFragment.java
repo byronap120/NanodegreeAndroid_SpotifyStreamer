@@ -1,5 +1,6 @@
 package com.byronajin.spotify.app.spotifystreamer;
 
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -40,6 +41,7 @@ import retrofit.RetrofitError;
 public class TopTracksFragment extends Fragment {
 
     private static final String LOG_TAG = TopTracksFragment.class.getSimpleName();
+    private boolean mTwoPane;
     SpotifyApi api;
     TopTrackAdapter<MyTrack> tracksAdapter;
     ArrayList<MyTrack> trackList;
@@ -62,6 +64,7 @@ public class TopTracksFragment extends Fragment {
         api = new SpotifyApi();
         actualQuery="";
         urlImageArtist="";
+        mTwoPane = false;
     }
 
     @Override
@@ -71,12 +74,6 @@ public class TopTracksFragment extends Fragment {
 
         list = (ListView) view.findViewById(R.id.listViewTopTracks);
         artistImageView = (ImageView) view.findViewById(R.id.ArtistImageView);
-        final Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        collapsingToolbar = (CollapsingToolbarLayout) view.findViewById(R.id.collapsing_toolbar);
-        //Replace the action bar with the toolbar
-        ((TopTracks)getActivity()).setSupportActionBar(toolbar);
-        ((TopTracks)getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
 
         //Restore the values of the list of tracks and Artist image url
         if(savedInstanceState == null || !savedInstanceState.containsKey("trackList")) {
@@ -100,7 +97,6 @@ public class TopTracksFragment extends Fragment {
                         .into(artistImageView);
         }
 
-        collapsingToolbar.setTitle(artistName);
         tracksAdapter = new TopTrackAdapter<MyTrack>(
                 getActivity(),
                 trackList);
@@ -109,11 +105,15 @@ public class TopTracksFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String trackName = trackList.get(position).name;
-                Intent intent = new Intent(getActivity(), TrackPlayer.class)
-                        .putExtra("idArtist", idArtist)
-                        .putExtra("tackName", trackName)
-                        .putExtra("artistName", artistName);
-                startActivity(intent);
+                if(mTwoPane){
+                    showDialog(idArtist, trackName, artistName);
+                }else{
+                    Intent intent = new Intent(getActivity(), TrackPlayer.class)
+                            .putExtra("idArtist", idArtist)
+                            .putExtra("tackName", trackName)
+                            .putExtra("artistName", artistName);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -121,7 +121,19 @@ public class TopTracksFragment extends Fragment {
         return view;
     }
 
+    void showDialog(String idArtist, String trackName, String artistName) {
+        DialogFragment newFragment = TrackPlayerFragment.newInstance(idArtist,trackName,artistName);
+        newFragment.show(getActivity().getFragmentManager(), "dialog");
 
+    }
+
+
+    public void updateListTracks(String artistID, String artistName){
+        idArtist = artistID;
+        artistName = artistName;
+        mTwoPane = true;
+        new SearchSpotifyTask().execute(idArtist, artistName);
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {

@@ -1,5 +1,6 @@
 package com.byronajin.spotify.app.spotifystreamer;
 
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,6 +43,7 @@ import retrofit.RetrofitError;
 public class MainActivityFragment extends Fragment {
 
     //Global vairiables
+    OnArtistSelectedListener mCallback;
     private static final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     SpotifyApi api;
     ArtistListArrayAdapter<MyArtist> artistAdapter;
@@ -100,9 +102,7 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String idArtist = artistList.get(position).id;
-                Intent intent = new Intent(getActivity(), TopTracks.class)
-                        .putExtra(Intent.EXTRA_TEXT, idArtist).putExtra("artistName", artistList.get(position).name);
-                startActivity(intent);
+                mCallback.artistSelected(idArtist,artistList.get(position).name);
             }
         });
 
@@ -228,6 +228,26 @@ public class MainActivityFragment extends Fragment {
             //searchView.requestFocus();
             searchView.setQuery(actualQuery,false);
             searchView.clearFocus();
+        }
+    }
+
+    //Fragment functionality
+
+    public interface OnArtistSelectedListener {
+        public void artistSelected(String trackID , String artistName);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception.
+        try {
+            mCallback = (OnArtistSelectedListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnArtistSelectedListener");
         }
     }
 }
