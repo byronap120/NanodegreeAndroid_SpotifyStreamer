@@ -3,12 +3,17 @@ package com.byronajin.spotify.app.spotifystreamer;
 
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Handler;
 
 import android.os.Bundle;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -322,6 +327,7 @@ public class TrackPlayerFragment  extends DialogFragment {
         }
         textViewTime.setText("0:" + timeString);
     }
+
 
 
 }

@@ -84,6 +84,8 @@ public class TopTracksFragment extends Fragment {
                 artistName = intent.getStringExtra("artistName");
                 new SearchSpotifyTask().execute(idArtist, artistName);
             }
+
+
         }
         else {
             trackList = savedInstanceState.getParcelableArrayList("trackList");
