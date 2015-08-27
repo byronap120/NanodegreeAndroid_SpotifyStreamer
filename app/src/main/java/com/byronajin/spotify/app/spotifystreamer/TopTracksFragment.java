@@ -92,6 +92,8 @@ public class TopTracksFragment extends Fragment {
             actualQuery = savedInstanceState.getString("actualQuery");
             artistName =  savedInstanceState.getString("artistName");
             urlImageArtist =  savedInstanceState.getString("urlImageArtist");
+            mTwoPane =  savedInstanceState.getBoolean("mTwoPane");
+            idArtist = savedInstanceState.getString("idArtist");
 
             if(urlImageArtist != null && !urlImageArtist.equals(""))
                 Picasso.with(getActivity())
@@ -130,9 +132,9 @@ public class TopTracksFragment extends Fragment {
     }
 
 
-    public void updateListTracks(String artistID, String artistName){
+    public void updateListTracks(String artistID, String artistname){
         idArtist = artistID;
-        artistName = artistName;
+        artistName = artistname;
         mTwoPane = true;
         new SearchSpotifyTask().execute(idArtist, artistName);
     }
@@ -143,6 +145,8 @@ public class TopTracksFragment extends Fragment {
         outState.putString("actualQuery", actualQuery);
         outState.putString("artistName", artistName);
         outState.putString("urlImageArtist", urlImageArtist);
+        outState.putString("idArtist", idArtist);
+        outState.putBoolean("mTwoPane", mTwoPane);
         super.onSaveInstanceState(outState);
     }
 

@@ -2,19 +2,15 @@ package com.byronajin.spotify.app.spotifystreamer;
 
 
 import android.app.DialogFragment;
+import android.content.ComponentName;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
-import android.os.Handler;
 
 import android.os.Bundle;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicBlur;
-import android.support.v4.app.Fragment;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +35,8 @@ import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 import retrofit.RetrofitError;
 
+import com.byronajin.spotify.app.spotifystreamer.MusicService.MusicBinder;
+
 /**
  * A placeholder fragment containing a simple view.
  */
@@ -50,13 +48,16 @@ public class TrackPlayerFragment  extends DialogFragment {
     String artistName;
     Integer indexTrack;
     ArrayList<MyTrack> listTracks;
-    MediaPlayer mediaPlayer;
+   // MediaPlayer mediaPlayer;
     SeekBar trackSeekBar;
-    private Handler mHandler;
-    boolean playing;
+    boolean playing,rotate;
     ImageView albumImageView;
     TextView textViewTrack,textViewArtist,textViewAlbum,textViewTime;
     ImageButton imageButtonPrevious, imageButtonPause , imageButtonNext;
+   //Music Service
+    private AppSingleton appSingleton;
+    private MusicService musicSrv;
+
 
 
     static TrackPlayerFragment newInstance(String idArtist, String trackName, String artistName) {
@@ -78,10 +79,10 @@ public class TrackPlayerFragment  extends DialogFragment {
         urlImageArtist="";
         indexTrack=0;
         listTracks = new ArrayList<MyTrack>();
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mHandler = new Handler();
         playing = false;
+        rotate=false;
+        appSingleton = ((AppSingleton)getActivity().getApplicationContext());
+        musicSrv = appSingleton.getMusicSrv();
     }
 
     public TrackPlayerFragment() {
@@ -105,73 +106,88 @@ public class TrackPlayerFragment  extends DialogFragment {
         imageButtonNext.setOnClickListener(onClickPlayerButton);
         trackSeekBar.setMax(30);
 
+
         Intent intent = getActivity().getIntent();
-       if(getArguments()== null){
-            idArtist = intent.getStringExtra("idArtist");
-            trackName = intent.getStringExtra("tackName");
-            artistName = intent.getStringExtra("artistName");
+        if(savedInstanceState!=null) {
+            listTracks =  savedInstanceState.getParcelableArrayList("trackList");
+            artistName =  savedInstanceState.getString("artistName");
+            trackName =  savedInstanceState.getString("trackName");
+            idArtist = savedInstanceState.getString("idArtist");
+            indexTrack = savedInstanceState.getInt("indexTrack");
+            rotate=true;
+            PlayTrack(indexTrack);
+        }else{
+            if(getArguments()== null){
+                idArtist = intent.getStringExtra("idArtist");
+                trackName = intent.getStringExtra("tackName");
+                artistName = intent.getStringExtra("artistName");
+            }else {
+                idArtist = getArguments().getString("idArtist");
+                trackName = getArguments().getString("trackName");
+                artistName = getArguments().getString("artistName");
+            }
             new SearchSpotifyTask().execute(idArtist);
-        }else {
-           idArtist = getArguments().getString("idArtist");
-           trackName = getArguments().getString("trackName");
-           artistName = getArguments().getString("artistName");
-           new SearchSpotifyTask().execute(idArtist);
-       }
+        }
+
 
         //Listeners for player
-        trackSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        trackSeekBar.setOnSeekBarChangeListener(seekBarListener);
 
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (mediaPlayer != null && fromUser) {
-                    mediaPlayer.seekTo(progress * 1000);
-                    setTextSeekBar(progress);
-                }
-            }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                playing = false;
-            }
-        });
 
         return view;
     }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList("trackList", listTracks);
+        outState.putString("artistName", artistName);
+        outState.putString("trackName", trackName);
+        outState.putString("idArtist", idArtist);
+        outState.putInt("indexTrack", indexTrack);
+        super.onSaveInstanceState(outState);
+    }
+
+    SeekBar.OnSeekBarChangeListener seekBarListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (fromUser) {
+                musicSrv.seekToMediaPlayer(progress);
+                setTextSeekBar(progress);
+            }
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+
+        }
+    };
 
     View.OnClickListener onClickPlayerButton = new View.OnClickListener() {
         public void onClick(View view) {
             switch (view.getId()) {
             case R.id.imageButtonPrevious:
                if(indexTrack>0){
-                   playing=false;
-                   mediaPlayer.stop();
-                   mediaPlayer.release();
-                   mediaPlayer = new MediaPlayer();
-                   mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                   playing = false;
                    indexTrack--;
                    PlayTrack(indexTrack);
                }
                 break;
             case R.id.imageButtonPause:
-                if(playing){
-                    mediaPlayer.pause();
-                    playing=false;
+                if(musicSrv.isPlaying()){
+                    musicSrv.pausePlayer();
+                    musicSrv.setPlaying(false);
+                    playing = false;
                     imageButtonPause.setImageResource(R.drawable.play_circle_outline);
                 }else{
-                    mediaPlayer.start();
-                    playing=true;
+                    musicSrv.resumePlayer();
+                    musicSrv.setPlaying(true);
                     new listenerActualTrack().execute();
                     imageButtonPause.setImageResource(R.drawable.pause_circle_outline);
                 }
@@ -179,11 +195,7 @@ public class TrackPlayerFragment  extends DialogFragment {
                 break;
             case R.id.imageButtonNext:
                 if(indexTrack<listTracks.size()-1){
-                    playing=false;
-                    mediaPlayer.stop();
-                    mediaPlayer.release();
-                    mediaPlayer = new MediaPlayer();
-                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    playing = false;
                     indexTrack++;
                     PlayTrack(indexTrack);
                 }
@@ -193,13 +205,6 @@ public class TrackPlayerFragment  extends DialogFragment {
     };
 
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        playing=false;
-        mediaPlayer.stop();
-        mediaPlayer.release();
-    }
 
     public class SearchSpotifyTask extends AsyncTask<String, Void, ArrayList<MyTrack>>
     {
@@ -239,24 +244,29 @@ public class TrackPlayerFragment  extends DialogFragment {
         }
     }
 
+
     public void PlayTrack(int indexActualTrack){
         String trackUrl = "";
-        String imageUrl = "";
         if(indexActualTrack >=0){
             trackUrl = listTracks.get(indexActualTrack).preview_url;
         }else {
-            for(int i=0 ; i< listTracks.size() ; i++){
-                if(listTracks.get(i).name.equals(trackName)){
+            for(int i=0 ; i < listTracks.size(); i++) {
+                if(listTracks.get(i).name.equals(trackName)) {
                     indexTrack = i;
                     indexActualTrack = i;
                     trackUrl = listTracks.get(i).preview_url;
                 }
             }
         }
-
+        trackName = listTracks.get(indexActualTrack).name;
         loadImageTrack(listTracks.get(indexActualTrack).imageHQ);
-        setTextviews(listTracks.get(indexActualTrack).name,artistName ,listTracks.get(indexActualTrack).album);
-        playPreviewTrack(trackUrl);
+        setTextviews(trackName, artistName, listTracks.get(indexActualTrack).album);
+        if(!rotate){
+            musicSrv.playSong(trackUrl);
+            musicSrv.setPlaying(true);
+        }
+        new listenerActualTrack().execute();
+        rotate=false;
     }
 
     public void setTextviews(String track , String artist , String album){
@@ -264,6 +274,7 @@ public class TrackPlayerFragment  extends DialogFragment {
         textViewArtist.setText(artist);
         textViewAlbum.setText(album);
     }
+
     public void loadImageTrack(String urlImage){
         if(urlImage !=null){
             Picasso.with(getActivity())
@@ -275,7 +286,8 @@ public class TrackPlayerFragment  extends DialogFragment {
                     into(albumImageView);
         }
     }
-    public void playPreviewTrack (String trackUrl){
+
+/*    public void playPreviewTrack (String trackUrl){
         try {
             mediaPlayer.setDataSource(trackUrl);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -291,14 +303,24 @@ public class TrackPlayerFragment  extends DialogFragment {
             e.printStackTrace();
         }
 
-    }
+    }*/
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        playing = false;
+        trackSeekBar.setOnSeekBarChangeListener(null);
+
+    }
 
     public class listenerActualTrack extends AsyncTask<String, Void, ArrayList<MyTrack>>
     {
 
         @Override
         protected ArrayList<MyTrack> doInBackground(String... strings) {
+
+            Log.d("value2", musicSrv.isPlaying() + "");
+            playing = musicSrv.isPlaying();
             while(playing){
                 try {
                     publishProgress();
@@ -313,7 +335,7 @@ public class TrackPlayerFragment  extends DialogFragment {
         @Override
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
-            int time = mediaPlayer.getCurrentPosition() / 1000;
+            int time = musicSrv.currentPositionPlayer() / 1000;
             trackSeekBar.setProgress(time);
             setTextSeekBar(time);
 
